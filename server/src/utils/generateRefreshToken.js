@@ -1,19 +1,26 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import UserModel from "../models/user.model";
+
 dotenv.config();
 
 const generateRefreshToken = async (userId) => {
-  const token = jwt.sign({ id: userId }, process.env.SECRET_KEY_ACCESS_TOKEN, {
-    expiresIn: "7d",
-  });
+  try {
+    const token = jwt.sign({ id: userId }, process.env.SECRET_KEY_ACCESS_TOKEN, {
+      expiresIn: "7d",
+    });
 
-  const upgradeRefreshTokenUSer = await UserModel.findByIdAndUpdate(
-    { userId },
-    { refresh_token: token }
-  );
+    await UserModel.findByIdAndUpdate(
+      userId,
+      { refresh_token: token },
+      { new: true }
+    );
 
-  return token;
+    return token;
+  } catch (error) {
+    console.error("Error generating refresh token:", error);
+    throw new Error("Could not generate refresh token");
+  }
 };
 
 export default generateRefreshToken;
