@@ -119,13 +119,19 @@ export const verifyEmailController = async (req, res) => {
   }
 };
 
-
-
 //login controller
 
 export const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Please provide email and password",
+        error: true,
+        success: false,
+      });
+    }
 
     const user = await UserModel.findOne({ email });
 
@@ -163,7 +169,7 @@ export const loginController = async (req, res) => {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure cookies only in production
+      secure: process.env.NODE_ENV === "production", 
       sameSite: "None",
     };
 
