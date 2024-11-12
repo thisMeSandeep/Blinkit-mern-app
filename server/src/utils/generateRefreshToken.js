@@ -6,7 +6,7 @@ dotenv.config();
 
 const generateRefreshToken = async (userId) => {
   try {
-    const token = jwt.sign({ id: userId }, process.env.SECRET_KEY_ACCESS_TOKEN, {
+    const token = jwt.sign({ id: userId }, process.env.SECRET_KEY_REFRESH_TOKEN, {
       expiresIn: "7d",
     });
 

@@ -169,7 +169,7 @@ export const loginController = async (req, res) => {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", 
+      secure: process.env.NODE_ENV === "production",
       sameSite: "None",
     };
 
@@ -193,6 +193,38 @@ export const loginController = async (req, res) => {
       success: false,
       error: true,
       message: error.message || "Internal server error",
+    });
+  }
+};
+
+//logout controller
+
+export const logoutController = async (req, res) => {
+  try {
+    const userId = req.userId; // middleware
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+    };
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
+
+   await UserModel.findByIdAndUpdate(userId, {
+      refresh_token: "",
+    });  // removing refresh token once the user logout
+
+    return res.status(200).json({
+      message: "Logout succesfull",
+      success: true,
+      error: false,
+    });
+  } catch (error) {
+    console.log("error:", error.message);
+    return res.status(500).json({
+      message: "Internal server error",
+      success: false,
+      error: true,
     });
   }
 };
