@@ -2,6 +2,8 @@ import bcryptjs from "bcryptjs";
 import UserModel from "../models/user.model.js";
 import sendEmail from "../config/sendEmail.js";
 import verifyEmailTemplate from "../utils/verifyEmailTemplate.js";
+import generateAccessToken from "../utils/generateAccessToken.js";
+import generateRefreshToken from "../utils/generateRefreshToken.js";
 
 //register user
 export const registerUserController = async (req, res) => {
@@ -117,6 +119,8 @@ export const verifyEmailController = async (req, res) => {
   }
 };
 
+
+
 //login controller
 
 export const loginController = async (req, res) => {
@@ -125,42 +129,64 @@ export const loginController = async (req, res) => {
 
     const user = await UserModel.findOne({ email });
 
-    //check email existence
+    // Check email existence
     if (!user) {
       return res.status(400).json({
-        message: "Email id is not available !",
+        message: "Email id is not available!",
         error: true,
         success: false,
       });
     }
 
-    //check account status
+    // Check account status
     if (user.status !== "Active") {
       return res.status(400).json({
-        message: "Email id is not Active !",
+        message: "Email id is not active!",
         error: true,
         success: false,
       });
     }
 
-    // password match
+    // Password match
     const checkPassword = await bcryptjs.compare(password, user.password);
     if (!checkPassword) {
       return res.status(400).json({
-        message: "Invalid Password !",
+        message: "Invalid password!",
         error: true,
         success: false,
       });
     }
 
+    // Generating tokens
+    const accessToken = await generateAccessToken(user._id);
+    const refreshToken = await generateRefreshToken(user._id);
 
-    
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies only in production
+      sameSite: "None",
+    };
+
+    // Sending tokens to cookies
+    res.cookie("accessToken", accessToken, cookieOptions);
+    res.cookie("refreshToken", refreshToken, cookieOptions);
+
+    return res.status(200).json({
+      message: "Login successful",
+      error: false,
+      success: true,
+      data: {
+        accessToken,
+        refreshToken,
+        user,
+      },
+    });
   } catch (error) {
     console.error("Login failed:", error.message);
     return res.status(500).json({
       success: false,
       error: true,
-      message: error.message || error,
+      message: error.message || "Internal server error",
     });
   }
 };
