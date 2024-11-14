@@ -5,6 +5,8 @@ import verifyEmailTemplate from "../utils/verifyEmailTemplate.js";
 import generateAccessToken from "../utils/generateAccessToken.js";
 import generateRefreshToken from "../utils/generateRefreshToken.js";
 import uploadImageClodinary from "../utils/uploadImageClodinary.js";
+import generateOtp from "../utils/generateOtp.js";
+import verifyOtpTemplate from "../utils/verifyOtpTemplate.js";
 
 //register user
 export const registerUserController = async (req, res) => {
@@ -295,3 +297,60 @@ export const updateUserDetails = async (req, res) => {
     });
   }
 };
+
+// password forgot
+
+export const forgotPasswordController = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Email is not registered!",
+      });
+    }
+
+    // If refresh token is available, it means user is already logged in
+    if (user.refresh_token) {
+      return res.status(400).json({
+        message: "Bad request!",
+      });
+    }
+
+    const otp = generateOtp();
+    const otpExpireTime = new Date().getTime() + 60 * 60 * 1000; // 1 hour from now
+
+    // Update user with OTP and expiration time
+    await UserModel.updateOne(
+      { email },
+      {
+        forgot_password_otp: otp,
+        forgot_password_expiry: new Date(otpExpireTime).toISOString(),
+      }
+    );
+
+    const otpEmail = {
+      sendTo: email,
+      subject: "Password reset OTP",
+      html: verifyOtpTemplate(user.name, otp),
+    };
+
+    // Send email asynchronously
+    await sendEmail(otpEmail);
+
+    return res.status(200).json({
+      message: "OTP has been sent to your email",
+      success: true,
+      error: false,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: "Internal server error!",
+      success: false,
+      error: true,
+    });
+  }
+};
+
