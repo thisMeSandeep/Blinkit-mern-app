@@ -407,3 +407,62 @@ export const verifyForgotPasswordOtp = async (req, res) => {
     });
   }
 };
+
+
+
+
+// Password reset function
+
+export const resetPasswordController = async (req, res) => {
+  try {
+    const { email, newPassword ,confirmPassword} = req.body;
+
+    // Validate input
+    if (!email || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "Please provide both email and  password!",
+        success: false,
+        error: true,
+      });
+    }
+
+    if(newPassword !== confirmPassword){
+      return res.status(400).json({
+        message: "Password did not match!",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Find the user by email
+    const user = await UserModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "User not found!",
+        success: false,
+        error: true,
+      });
+    }
+
+    // Hash the new password
+    const saltRounds = 10;
+    const hashedPassword = await bcryptjs.hash(newPassword, saltRounds);
+
+    // Update the user's password in the database
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Password reset successful!",
+      success: true,
+      error: false,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Internal server error!",
+      success: false,
+      error: true,
+    });
+  }
+};
