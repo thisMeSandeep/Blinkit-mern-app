@@ -354,3 +354,56 @@ export const forgotPasswordController = async (req, res) => {
   }
 };
 
+// password reset otp verification
+
+export const verifyForgotPasswordOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Please provide both email and OTP!",
+        success: false,
+        error: true,
+      });
+    }
+
+    const user = await UserModel.findOne({ email, forgot_password_otp: otp });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Email and OTP did not match!",
+        success: false,
+        error: true,
+      });
+    }
+
+    const currentTime = new Date();
+
+    if (user.forgot_password_expiry < currentTime) {
+      return res.status(400).json({
+        message: "OTP is expired",
+        error: true,
+        success: false,
+      });
+    }
+
+    await UserModel.findByIdAndUpdate(user._id, {
+      forgot_password_otp: "",
+      forgot_password_expiry: "",
+    });
+
+    return res.status(200).json({
+      message:
+        "OTP verified successfully. Please proceed to reset your password.",
+      success: true,
+      error: false,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Internal server error!",
+      success: false,
+      error: true,
+    });
+  }
+};

@@ -7,7 +7,8 @@ import {
   uploadAvatar,
   updateUserDetails,
   forgotPasswordController,
-} from "../controllers/user.controller.js";            
+  verifyForgotPasswordOtp,
+} from "../controllers/user.controller.js";
 import auth from "../middleware/auth.js";
 import upload from "../middleware/multer.js";
 
@@ -22,8 +23,7 @@ userRouter
   .put(auth, upload.single("avatar"), uploadAvatar); // uploading user avatar
 userRouter.route("/update-user").put(auth, updateUserDetails);
 userRouter.route("/forgot-password").post(forgotPasswordController); // forgot password
-
+userRouter.route("/verify-forogot-password-otp").post(verifyForgotPasswordOtp);
 export default userRouter;
-
 
 //546155
