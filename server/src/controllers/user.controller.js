@@ -4,6 +4,7 @@ import sendEmail from "../config/sendEmail.js";
 import verifyEmailTemplate from "../utils/verifyEmailTemplate.js";
 import generateAccessToken from "../utils/generateAccessToken.js";
 import generateRefreshToken from "../utils/generateRefreshToken.js";
+import uploadImageClodinary from "../utils/uploadImageClodinary.js";
 
 //register user
 export const registerUserController = async (req, res) => {
@@ -231,32 +232,66 @@ export const logoutController = async (req, res) => {
 
 //uploader user avatar
 
-export async  function uploadAvatar(request,response){
+export async function uploadAvatar(req, res) {
   try {
-      const userId = request.userId // auth middlware
-      const image = request.file  // multer middleware
+    const userId = req.userId; // auth middlware
+    const image = req.file; // multer middleware
 
-      const upload = await uploadImageClodinary(image)
-      
-      const updateUser = await UserModel.findByIdAndUpdate(userId,{
-          avatar : upload.url
-      })
+    const upload = await uploadImageClodinary(image);
 
-      return response.json({
-          message : "upload profile",
-          success : true,
-          error : false,
-          data : {
-              _id : userId,
-              avatar : upload.url
-          }
-      })
+    await UserModel.findByIdAndUpdate(userId, {
+      avatar: upload.url,
+    });
 
+    return res.json({
+      message: "upload profile",
+      success: true,
+      error: false,
+      data: {
+        _id: userId,
+        avatar: upload.url,
+      },
+    });
   } catch (error) {
-      return response.status(500).json({
-          message : error.message || error,
-          error : true,
-          success : false
-      })
+    return res.status(500).json({
+      message: error.message || error,
+      error: true,
+      success: false,
+    });
   }
 }
+
+//update user details
+
+export const updateUserDetails = async (req, res) => {
+  try {
+    const userId = req.userId; //auth middleware
+    const { name, email, mobile, password } = req.body;
+    let hashPassword = "";
+    if (password) {
+      const salt = await bcryptjs.genSalt(10);
+      hashPassword = await bcryptjs.hash(password, salt);
+    }
+    const updateUser = await UserModel.updateOne(
+      { _id: userId },
+      {
+        ...(name && { name: name }),
+        ...(email && { email: email }),
+        ...(mobile && { mobile: mobile }),
+        ...(password && { password: hashPassword }),
+      }
+    );
+    return res.json({
+      message: "Updated successfully",
+      error: false,
+      success: true,
+      data: updateUser,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message || err,
+      error: true,
+      success: false,
+    });
+  }
+};

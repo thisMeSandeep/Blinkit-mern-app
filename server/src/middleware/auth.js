@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { response } from "express";
+
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ const auth = (req, res, next) => {
     const decode = jwt.verify(token, process.env.SECRET_KEY_ACCESS_TOKEN);
 
     if (!decode) {
-      return response.status(401).json({
+      return res.status(401).json({
         message: "Unauthorized access !",
         error: true,
         success: false,
