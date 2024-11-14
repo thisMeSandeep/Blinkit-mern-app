@@ -210,9 +210,9 @@ export const logoutController = async (req, res) => {
     res.clearCookie("accessToken", cookieOptions);
     res.clearCookie("refreshToken", cookieOptions);
 
-   await UserModel.findByIdAndUpdate(userId, {
+    await UserModel.findByIdAndUpdate(userId, {
       refresh_token: "",
-    });  // removing refresh token once the user logout
+    }); // removing refresh token once the user logout
 
     return res.status(200).json({
       message: "Logout succesfull",
@@ -228,3 +228,35 @@ export const logoutController = async (req, res) => {
     });
   }
 };
+
+//uploader user avatar
+
+export async  function uploadAvatar(request,response){
+  try {
+      const userId = request.userId // auth middlware
+      const image = request.file  // multer middleware
+
+      const upload = await uploadImageClodinary(image)
+      
+      const updateUser = await UserModel.findByIdAndUpdate(userId,{
+          avatar : upload.url
+      })
+
+      return response.json({
+          message : "upload profile",
+          success : true,
+          error : false,
+          data : {
+              _id : userId,
+              avatar : upload.url
+          }
+      })
+
+  } catch (error) {
+      return response.status(500).json({
+          message : error.message || error,
+          error : true,
+          success : false
+      })
+  }
+}
